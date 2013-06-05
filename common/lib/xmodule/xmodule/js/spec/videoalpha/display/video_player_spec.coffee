@@ -1,24 +1,32 @@
 describe 'VideoPlayerAlpha', ->
+  playerVars =
+    controls: 0
+    wmode: 'transparent'
+    rel: 0
+    showinfo: 0
+    enablejsapi: 1
+    modestbranding: 1
+    html5: 1
+
   beforeEach ->
     window.onTouchBasedDevice = jasmine.createSpy('onTouchBasedDevice').andReturn false
     # It tries to call methods of VideoProgressSlider on Spy
     for part in ['VideoCaptionAlpha', 'VideoSpeedControlAlpha', 'VideoVolumeControlAlpha', 'VideoProgressSliderAlpha', 'VideoControlAlpha']
       spyOn(window[part].prototype, 'initialize').andCallThrough()
-    # jasmine.stubVideoPlayerAlpha @, [], false
+
 
   afterEach ->
     YT.Player = undefined
 
   describe 'constructor', ->
     beforeEach ->
-      spyOn YT, 'Player'
       $.fn.qtip.andCallFake ->
         $(this).data('qtip', true)
-      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
 
     describe 'always', ->
       beforeEach ->
         jasmine.stubVideoPlayerAlpha @, [], false
+        $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
         @player = new VideoPlayerAlpha video: @video
 
       it 'instanticate current time to zero', ->
@@ -77,17 +85,12 @@ describe 'VideoPlayerAlpha', ->
         expect($('.add-fullscreen')).toHandleWith 'click', @player.toggleFullScreen
 
     it 'create Youtube player', ->
-      jasmine.stubVideoPlayerAlpha @, [], false, true
+      jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
+      spyOn YT, 'Player'
       @player = new VideoPlayerAlpha video: @video
       expect(YT.Player).toHaveBeenCalledWith('id', {
-        playerVars:
-          controls: 0
-          wmode: 'transparent'
-          rel: 0
-          showinfo: 0
-          enablejsapi: 1
-          modestbranding: 1
-          html5: 1
+        playerVars: playerVars
         videoId: 'normalSpeedYoutubeId'
         events:
           onReady: @player.onReady
@@ -97,26 +100,20 @@ describe 'VideoPlayerAlpha', ->
 
     it 'create HTML5 player', ->
       jasmine.stubVideoPlayerAlpha @, [], false, true
+      spyOn HTML5Video, 'Player'
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
-      expect(YT.Player).toHaveBeenCalledWith('id', {
-        playerVars:
-          controls: 0
-          wmode: 'transparent'
-          rel: 0
-          showinfo: 0
-          enablejsapi: 1
-          modestbranding: 1
-          html5: 1
-        videoId: 'normalSpeedYoutubeId'
+      expect(HTML5Video.Player).toHaveBeenCalledWith @video.el,
+        playerVars: playerVars
+        videoSources: @video.html5Sources
         events:
           onReady: @player.onReady
           onStateChange: @player.onStateChange
-          onPlaybackQualityChange: @player.onPlaybackQualityChange
-      })
 
     describe 'when not on a touch based device', ->
       beforeEach ->
         jasmine.stubVideoPlayerAlpha @, [], false
+        $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
         $('.add-fullscreen, .hide-subtitles').removeData 'qtip'
         @player = new VideoPlayerAlpha video: @video
 
@@ -132,6 +129,7 @@ describe 'VideoPlayerAlpha', ->
     describe 'when on a touch based device', ->
       beforeEach ->
         jasmine.stubVideoPlayerAlpha @, [], false
+        $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
         window.onTouchBasedDevice.andReturn true
         $('.add-fullscreen, .hide-subtitles').removeData 'qtip'
         @player = new VideoPlayerAlpha video: @video
@@ -147,6 +145,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'onReady', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @video.embed()
       @player = @video.player
       spyOnEvent @player, 'ready'
@@ -171,9 +170,9 @@ describe 'VideoPlayerAlpha', ->
         expect(@player.play).not.toHaveBeenCalled()
 
   describe 'onStateChange', ->
-
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
 
     describe 'when the video is unstarted', ->
       beforeEach ->
@@ -263,6 +262,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'onSeek', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       spyOn window, 'clearInterval'
       @player.player.interval = 100
@@ -294,6 +294,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'onSpeedChange', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       @player.currentTime = 60
       spyOn @player, 'updatePlayTime'
@@ -337,6 +338,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'onVolumeChange', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       @player.onVolumeChange undefined, 60
 
@@ -346,6 +348,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'update', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       spyOn @player, 'updatePlayTime'
 
@@ -368,6 +371,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'updatePlayTime', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       spyOn(@video, 'getDuration').andReturn 1800
       @player.caption.updatePlayTime = jasmine.createSpy('VideoCaptionAlpha.updatePlayTime')
@@ -386,6 +390,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'toggleFullScreen', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       @player.caption.resize = jasmine.createSpy('VideoCaptionAlpha.resize')
 
@@ -423,6 +428,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'play', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
 
     describe 'when the player is not ready', ->
@@ -444,6 +450,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'isPlaying', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
 
     describe 'when the video is playing', ->
@@ -463,6 +470,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'pause', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       @player.pause()
 
@@ -472,6 +480,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'duration', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       spyOn @video, 'getDuration'
       @player.duration()
@@ -482,6 +491,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'currentSpeed', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       @video.speed = '3.0'
 
@@ -491,6 +501,7 @@ describe 'VideoPlayerAlpha', ->
   describe 'volume', ->
     beforeEach ->
       jasmine.stubVideoPlayerAlpha @, [], false
+      $('.video').append $('<div class="add-fullscreen" /><div class="hide-subtitles" />')
       @player = new VideoPlayerAlpha video: @video
       @player.player.getVolume.andReturn 42
 
