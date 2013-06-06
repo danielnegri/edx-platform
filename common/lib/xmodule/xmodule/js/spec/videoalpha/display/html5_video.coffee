@@ -1,43 +1,31 @@
 describe 'VideoAlpha HTML5Video', ->
-
   playbackRates = [0.75, 1.0, 1.25, 1.5]
-
-  STATUS =
-    UNSTARTED: -1,
-    ENDED: 0,
-    PLAYING: 1,
-    PAUSED: 2,
-    BUFFERING: 3,
-    CUED: 5
+  STATUS = window.YT.PlayerState
+  playerVars =
+    controls: 0
+    wmode: 'transparent'
+    rel: 0
+    showinfo: 0
+    enablejsapi: 1
+    modestbranding: 1
+    html5: 1
+  file = window.location.href.replace(/\/common(.*)$/, '') + '/test_root/data/videoalpha/gizmo'
+  html5Sources =
+    mp4: "#{file}.mp4"
+    webm: "#{file}.webm"
+    ogg: "#{file}.ogv"
+  onReady = jasmine.createSpy 'onReady'
+  onStateChange = jasmine.createSpy 'onStateChange'
 
   beforeEach ->
     loadFixtures 'videoalpha_html5.html'
     @el = $('#example').find('.video')
-    @playerVars =
-      controls: 0
-      wmode: 'transparent'
-      rel: 0
-      showinfo: 0
-      enablejsapi: 1
-      modestbranding: 1
-      html5: 1
-      end: 5
-    @html5Sources =
-      mp4: 'http://www.808.dk/pics/video/gizmo.mp4'
-      webm: 'http://www.808.dk/pics/video/gizmo.webm'
-      ogg: 'http://www.808.dk/pics/video/gizmo.ogv'
-      # mp4: 'test.mp4'
-      # webm: 'test.webm'
-      # ogg: 'test.ogv'
-    @onReady = jasmine.createSpy 'onReady'
-    @onStateChange = jasmine.createSpy 'onStateChange'
-
     @player = new window.HTML5Video.Player @el,
-      playerVars: @playerVars,
-      videoSources: @html5Sources,
+      playerVars: playerVars,
+      videoSources: html5Sources,
       events:
-        onReady: @onReady
-        onStateChange: @onStateChange
+        onReady: onReady
+        onStateChange: onStateChange
 
     @videoEl = @el.find('.video-player video').get(0)
 
@@ -50,12 +38,11 @@ describe 'VideoAlpha HTML5Video', ->
 
     it 'check if sources are created in correct way', ->
       sources = $(@videoEl).find('source')
-      videoTypes = ['mp4', 'webm', 'ogg']
-      videoSources = [
-        'http://www.808.dk/pics/video/gizmo.mp4',
-        'http://www.808.dk/pics/video/gizmo.webm',
-        'http://www.808.dk/pics/video/gizmo.ogv'
-      ]
+      videoTypes = []
+      videoSources = []
+      $.each html5Sources, (index, source) ->
+        videoTypes.push index
+        videoSources.push source
       $.each sources, (index, source) ->
         s = $(source)
         expect($.inArray(s.attr('src'), videoSources)).not.toEqual -1
@@ -71,9 +58,7 @@ describe 'VideoAlpha HTML5Video', ->
       spyOn(@player, 'callStateChangeCallback').andCallThrough()
 
     describe 'click', ->
-
       describe 'when player is paused', ->
-
         beforeEach ->
           spyOn(@videoEl, 'play').andCallThrough()
           @player.playerState = STATUS.PAUSED
@@ -87,7 +72,6 @@ describe 'VideoAlpha HTML5Video', ->
 
         it 'callback was called', ->
           expect(@player.callStateChangeCallback).toHaveBeenCalled()
-
 
       describe 'when player is played', ->
 
@@ -118,15 +102,15 @@ describe 'VideoAlpha HTML5Video', ->
       it 'player state was changed', ->
         waitsFor ( ->
           @player.playerState != HTML5Video.PlayerState.PAUSED
-        ), 'Player state should be changed', 200
+        ), 'Player state should be changed', 1000
 
         runs ->
           expect(@player.playerState).toBe STATUS.PLAYING
 
       it 'callback was called', ->
         waitsFor ( ->
-          @player.playerState != HTML5Video.PlayerState.PAUSED
-        ), 'Player state should be changed', 200
+          @player.playerState != STATUS.PAUSED
+        ), 'Player state should be changed', 1000
 
         runs ->
           expect(@player.callStateChangeCallback).toHaveBeenCalled()
@@ -143,8 +127,8 @@ describe 'VideoAlpha HTML5Video', ->
 
       it 'player state was changed', ->
         waitsFor ( ->
-          @player.playerState != HTML5Video.PlayerState.UNSTARTED
-        ), 'Player state should be changed', 400
+          @player.playerState != STATUS.UNSTARTED
+        ), 'Player state should be changed', 1000
 
         runs ->
           expect(@player.playerState).toBe STATUS.PAUSED
@@ -152,7 +136,7 @@ describe 'VideoAlpha HTML5Video', ->
       it 'callback was called', ->
         waitsFor ( ->
           @player.playerState != HTML5Video.PlayerState.UNSTARTED
-        ), 'Player state should be changed', 400
+        ), 'Player state should be changed', 1000
 
         runs ->
           expect(@player.callStateChangeCallback).toHaveBeenCalled()
@@ -162,84 +146,60 @@ describe 'VideoAlpha HTML5Video', ->
       beforeEach ->
         waitsFor ( ->
           @player.playerState != STATUS.UNSTARTED
-        ), 'Video cannot be played', 200
+        ), 'Video cannot be played', 1000
 
       it 'player state was changed', ->
         runs ->
           expect(@player.playerState).toBe STATUS.PAUSED
 
       it 'end property was defined', ->
-        expect(@player.end).not.toBeNull()
+        runs ->
+          expect(@player.end).not.toBeNull()
 
       it 'start position was defined', ->
-        expect(@videoEl.currentTime).toBe(@player.start)
+        runs ->
+          expect(@videoEl.currentTime).toBe(@player.start)
 
       it 'callback was called', ->
         runs ->
           expect(@player.config.events.onReady).toHaveBeenCalled()
 
-    xdescribe 'ended', ->
+    describe 'ended', ->
       beforeEach ->
         waitsFor ( ->
-          @seek = @videoEl.currentTime
           @player.playerState != STATUS.UNSTARTED
-        ), 'Video cannot be played', 200
+        ), 'Video cannot be played', 1000
 
       it 'player state was changed', ->
         runs ->
-          @videoEl.currentTime = @videoEl.duration
-          @videoEl.play()
-
-          waitsFor ( ->
-            @player.playerState != STATUS.PLAYING
-          ), 'aaa', 200
-
-          runs ->
-            expect(@player.playerState).toBe STATUS.ENDED
+          jasmine.fireEvent @videoEl, "ended"
+          expect(@player.playerState).toBe STATUS.ENDED
 
       it 'callback was called', ->
-        runs ->
+          jasmine.fireEvent @videoEl, "ended"
           expect(@player.callStateChangeCallback).toHaveBeenCalled()
 
-    xdescribe 'timeupdate', ->
+    describe 'timeupdate', ->
 
       beforeEach ->
         spyOn(@videoEl, 'pause').andCallThrough()
         waitsFor ( ->
           @player.playerState != STATUS.UNSTARTED
-        ), 'Video cannot be played', 200
+        ), 'Video cannot be played', 1000
 
-
-      it 'player state was changed', ->
+      it 'player should be paused', ->
         runs ->
-          @videoEl.currentTime = 7
-          @videoEl.play()
-
-          waitsFor ( ->
-            @player.playerState != STATUS.PLAYING
-          ), 'aaa', 200
-
-          runs ->
-            expect(@videoEl.pause).toHaveBeenCalled()
-            # expect(@player.playerState).toBe STATUS.PAUSED
-
-      xit 'player state was changed', ->
-        flag = undefined
-        @videoEl.addEventListener 'timeupdate', ((data) ->
-          flag = true
-        ), false
-
-        # waitsFor ( ->
-        #   @seek = @videoEl.currentTime
-        #   flag == true
-        # ), 'We cannot play the video', 200
-        waitsFor ( ->
-          @seek = @videoEl.currentTime
-          @player.playerState != STATUS.UNSTARTED
-        ), 'Video cannot be played', 200
-
-        runs ->
+          @player.end = 3
+          @videoEl.currentTime = 5
+          jasmine.fireEvent @videoEl, "timeupdate"
           expect(@videoEl.pause).toHaveBeenCalled()
+
+      it 'end param should be re-defined', ->
+        runs ->
+          @player.end = 3
+          @videoEl.currentTime = 5
+          jasmine.fireEvent @videoEl, "timeupdate"
+          expect(@player.end).toBe @videoEl.duration
 
   describe 'methods:', ->
 
@@ -248,7 +208,7 @@ describe 'VideoAlpha HTML5Video', ->
         @volume = @videoEl.volume
         @seek = @videoEl.currentTime
         @player.playerState == STATUS.PAUSED
-      ), 'Video cannot be played', 200
+      ), 'Video cannot be played', 1000
 
 
     it 'pauseVideo', ->
@@ -291,7 +251,7 @@ describe 'VideoAlpha HTML5Video', ->
     it 'getCurrentTime', ->
       runs ->
         @videoEl.currentTime = 3
-        expect(@player.getCurrentTime()).toBe 3
+        expect(@player.getCurrentTime()).toBe @videoEl.currentTime
 
     it 'playVideo', ->
       runs ->
@@ -303,6 +263,8 @@ describe 'VideoAlpha HTML5Video', ->
       runs ->
         @player.playerState = STATUS.PLAYING
         expect(@player.getPlayerState()).toBe STATUS.PLAYING
+        @player.playerState = STATUS.ENDED
+        expect(@player.getPlayerState()).toBe STATUS.ENDED
 
     it 'getVolume', ->
       runs ->

@@ -20,6 +20,19 @@ jasmine.stubbedMetadata =
   bogus:
     duration: 100
 
+jasmine.fireEvent = (el, eventName) ->
+  if document.createEvent
+    event = document.createEvent "HTMLEvents"
+    event.initEvent eventName, true, true
+  else
+    event = document.createEventObject()
+    event.eventType = eventName
+  event.eventName = eventName
+  if document.createEvent
+    el.dispatchEvent(event)
+  else
+    el.fireEvent("on" + event.eventType, event)
+
 jasmine.stubbedCaption =
   start: [0, 10000, 20000, 30000]
   text: ['Caption at 0', 'Caption at 10000', 'Caption at 20000', 'Caption at 30000']
